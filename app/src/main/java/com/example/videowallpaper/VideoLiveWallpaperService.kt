@@ -1,12 +1,19 @@
 package com.example.videowallpaper
 
-import android.media.MediaPlayer
+import android.net.Uri
 import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import java.io.File
 
 /**
- * Renders a looping video as a live wallpaper.
+ * Renders a looping video as a live wallpaper using ExoPlayer, which
+ * supports a much wider range of containers/codecs than the plain
+ * MediaPlayer API (mp4, mkv, webm, ts, 3gp, and more, depending on the
+ * device's decoders).
+ *
  * The video file path is read from SharedPreferences, written there
  * by MainActivity after the user picks a video.
  */
@@ -16,7 +23,7 @@ class VideoLiveWallpaperService : WallpaperService() {
 
     private inner class VideoEngine : Engine() {
 
-        private var mediaPlayer: MediaPlayer? = null
+        private var player: ExoPlayer? = null
 
         override fun onSurfaceCreated(holder: SurfaceHolder) {
             super.onSurfaceCreated(holder)
@@ -25,9 +32,7 @@ class VideoLiveWallpaperService : WallpaperService() {
 
         override fun onVisibilityChanged(visible: Boolean) {
             super.onVisibilityChanged(visible)
-            mediaPlayer?.let {
-                if (visible) it.start() else it.pause()
-            }
+            player?.playWhenReady = visible
         }
 
         override fun onSurfaceDestroyed(holder: SurfaceHolder) {
@@ -47,23 +52,19 @@ class VideoLiveWallpaperService : WallpaperService() {
             if (!file.exists()) return
 
             releasePlayer()
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(file.absolutePath)
-                setSurface(holder.surface)
-                isLooping = true
-                setVolume(0f, 0f) // wallpapers should be silent
-                setOnPreparedListener { it.start() }
-                setOnErrorListener { _, _, _ -> true }
-                prepareAsync()
+            player = ExoPlayer.Builder(applicationContext).build().apply {
+                setVideoSurface(holder.surface)
+                setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+                repeatMode = Player.REPEAT_MODE_ONE
+                volume = 0f // wallpapers should be silent
+                prepare()
+                playWhenReady = true
             }
         }
 
         private fun releasePlayer() {
-            mediaPlayer?.apply {
-                stop()
-                release()
-            }
-            mediaPlayer = null
+            player?.release()
+            player = null
         }
     }
 }
