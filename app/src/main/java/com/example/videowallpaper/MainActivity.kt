@@ -8,11 +8,11 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.material.button.MaterialButton
 import java.io.File
 import java.io.FileOutputStream
 
@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
         setContentView(R.layout.activity_main)
 
         statusText = findViewById(R.id.statusText)
-        val pickButton = findViewById<Button>(R.id.pickVideoButton)
+        val pickButton = findViewById<MaterialButton>(R.id.pickVideoButton)
 
         pickButton.setOnClickListener {
             pickVideo.launch(supportedMimeTypes)
